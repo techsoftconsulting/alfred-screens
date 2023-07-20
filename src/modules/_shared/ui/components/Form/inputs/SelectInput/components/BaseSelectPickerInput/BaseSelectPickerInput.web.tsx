@@ -69,23 +69,39 @@ export default function BaseSelectPickerInput(
                     getOptionSelected={(option, value) => {
                         return option[finalOptionValue] === value?.[finalOptionValue];
                     }}
-
                     clearIcon={
-                        <Icon
-                                name={'close'}
-                                color={'greyMain'}
-                                type={'ionicon'}
-                                numberSize={SizingUtils.scale(10)}
-                        />
+                        <Box
+                                justifyContent={'center'}
+                                alignItems={'center'}
+                                height={'100%'}
+                                top={-15}
+                        >
+                            <Icon
+                                    name={'close'}
+                                    color={'greyMain'}
+                                    type={'ionicon'}
+                                    numberSize={SizingUtils.scale(15)}
+                            />
+                        </Box>
+                    }
+                    noOptionsText={
+                        <Text variant={'body'}>Sin opciones</Text>
                     }
                     popupIcon={
                         <Icon
                                 name={'caret-down'}
                                 color={'greyMain'}
                                 type={'ionicon'}
-                                numberSize={SizingUtils.scale(10)}
+                                numberSize={SizingUtils.scale(14)}
                         />
                     }
+                    slotProps={{
+                        popupIndicator: {
+                            style: {
+                                top: -20
+                            }
+                        }
+                    }}
                     renderOption={(props, option, state) =>
                             <div  {...props}><Box p={'m'}><Text variant={'body'}>{option?.name}</Text></Box></div>}
                     getOptionLabel={(option) => option[finalOptionText]}
@@ -95,16 +111,17 @@ export default function BaseSelectPickerInput(
                             InputProps={{
                                 ...params.InputProps,
                                 style: {
-                                    fontSize: theme.textVariants.body.fontSize,
+                                    height: '100%',
+                                    fontSize: `${theme.textVariants.body.fontSize + 5}px`,
                                     padding: 0,
-                                    paddingLeft: theme.spacing.s,
-                                    paddingRight: theme.spacing.s
+                                    paddingLeft: theme.spacing.m,
+                                    paddingRight: theme.spacing.m
                                     /*  height: 40*/
                                 }
                             }}
                             fullWidth
                             style={{
-                                height: SizingUtils.vscale(14),
+                                height: SizingUtils.vscale(20),
                                 borderRadius: 30
                             }}
                     />}

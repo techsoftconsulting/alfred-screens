@@ -8,7 +8,7 @@ export function InputWrapper({ hasError, children, bg, style }: InputWrapperProp
     return (
             <Box
                     borderRadius={SizingUtils.mscale(4)}
-                    borderWidth={1}
+                    borderWidth={5}
                     borderColor={hasError ? 'dangerMain' : 'greyLight'}
                     bg={bg ?? 'greyLight'}
                     justifyContent='center'

@@ -22,7 +22,6 @@ import RestaurantAvailability from '@modules/restaurants/domain/models/restauran
 import DateTimeUtils from '@utils/misc/datetime-utils';
 import { Modal, ModalProps } from '@main-components/Base/Modal';
 import { useTheme } from '@shared/ui/theme/AppTheme';
-import useNavigation from '@shared/domain/hooks/navigation/use-navigation';
 import { CircularProgress } from '@main-components/Base/CircularProgress';
 import QRCode from 'react-native-qrcode-svg';
 import SizingUtils from '@utils/misc/sizing-utils';
@@ -33,6 +32,8 @@ import UuidUtils from '@utils/misc/uuid-utils';
 import ObjectUtils from '@utils/misc/object-utils';
 import UserBookedRestaurantTableEvent from '@modules/restaurants/domain/events/user-booked-restaurant-table-event';
 import { ENV } from '@shared/infrastructure/utils/get-envs';
+import ArrayUtils from '@utils/misc/array-utils';
+import BaseSelectPickerInput from '@main-components/Form/inputs/SelectInput/components/BaseSelectPickerInput';
 
 const BASE_RADIUS = SizingUtils.mscale(4);
 
@@ -201,7 +202,7 @@ function RestaurantDescriptionSection({
                     </Text>
                 </Box>
                 <Box>
-                    <Text>{restaurant.description}</Text>
+                    <Text align={'justify'}>{restaurant.description}</Text>
                 </Box>
             </Box>
     );
@@ -369,6 +370,10 @@ function RestaurantScheduleSection({
 
                             <SchedulePicker
                                     schedule={availability}
+                                    selected={{
+                                        date: inputData.date,
+                                        hour: inputData.hour
+                                    }}
                                     onPick={(schedule) => {
                                         setInputData({
                                             ...inputData,
@@ -379,10 +384,44 @@ function RestaurantScheduleSection({
 
 
                             <Box
-                                    flexDirection={'row'}
-                                    justifyContent={'space-between'}
                                     mt={'l'}
                             >
+                                <Box mb={'m'}>
+                                    <Box
+
+                                            mb={'m'}
+                                    >
+                                        <Box mb={'m'}>
+                                            <Text
+                                                    variant={'heading3'}
+                                                    bold
+                                            >
+                                                Mesa disponible
+                                            </Text>
+                                        </Box>
+                                        <Box
+
+                                                flex={1}
+                                        >
+                                            <TableOptions
+                                                    value={inputData?.tableId}
+                                                    onChange={(value) => {
+                                                        setInputData({
+                                                            ...inputData,
+                                                            tableId: value
+                                                        });
+                                                    }}
+                                                    availability={availability}
+                                                    selectedOption={{
+                                                        date: inputData.date,
+                                                        hour: inputData.hour
+                                                    }}
+                                            />
+
+                                        </Box>
+
+                                    </Box>
+                                </Box>
                                 <Box>
                                     <Box mb={'m'}>
                                         <Text
@@ -504,12 +543,60 @@ function RestaurantScheduleSection({
     );
 }
 
-function SchedulePicker({ schedule, onPick }) {
+function TableOptions({
+    value,
+    onChange,
+    selectedOption,
+    availability
+}: { value: any; onChange: any; selectedOption: any; availability: RestaurantAvailability | undefined }) {
+
+    const day = selectedOption.date ? DateTimeUtils.format(DateTimeUtils.fromString(selectedOption.date), 'dddd').toUpperCase() : undefined;
+
+    const options = !availability ? [] : !day || !selectedOption.hour ? [] : availability?.[day].filter(el => el.availableSlots.includes(selectedOption.hour));
+
+    if (selectedOption.date && options.length == 0) {
+        return (
+                <Box
+                        borderRadius={20}
+                        p={'m'}
+                        bg={'warningLightest'}
+                >
+
+                    <Text
+                            color={'warningMain'}
+                            variant={'body'}
+                    >No hay mesas disponibles para las {selectedOption.hour}</Text>
+                </Box>
+        );
+    }
+
+    return (
+            <BaseInput
+                    noMargin
+                    bg={'white'}
+            >
+                <BaseSelectPickerInput
+                        onChange={onChange}
+                        value={value}
+                        choices={options?.map(o => {
+                            return {
+                                id: o.id,
+                                name: `${o.areaName} - ${o.name}`
+                            };
+                        })}
+                />
+            </BaseInput>
+    );
+}
+
+function SchedulePicker({
+    selected,
+    schedule,
+    onPick
+}: { selected: any; schedule: RestaurantAvailability | undefined; onPick: any }) {
 
     const today = DateTimeUtils.format(new Date(), 'dddd')?.toUpperCase();
     const todayRow = schedule?.[today];
-
-    const [selected, setSelected] = useState('');
 
     const [mode, setMode] = useState('collapsed');
 
@@ -523,48 +610,15 @@ function SchedulePicker({ schedule, onPick }) {
                             mt={'m'}
                             flexWrap={'wrap'}
                     >
-                        {
-                                !todayRow || todayRow?.length == 0 &&
-                                (
-                                        <Box>
-                                            <Text>Sin disponibilidad para hoy</Text>
-                                        </Box>
-                                )
-                        }
-                        {
-                            todayRow?.map((el, key) => {
-                                const isSelected = el + key == selected;
-                                return (
-                                        <TouchableOpacity
-                                                key={key}
-                                                onPress={() => {
 
-                                                    setSelected(isSelected ? null : el + key);
 
-                                                    onPick({
-                                                        date: DateTimeUtils.format(new Date(), 'YYYY-MM-DD'),
-                                                        hour: el
-                                                    });
+                        <TableGrid
+                                onPick={onPick}
+                                tables={todayRow ?? []}
+                                selected={selected}
+                                dayName={today}
+                        />
 
-                                                }}
-                                        >
-                                            <Box
-                                                    borderRadius={BASE_RADIUS}
-                                                    borderWidth={5}
-                                                    borderColor={isSelected ? 'appSuccess' : 'infoMain'}
-                                                    p={'m'}
-                                                    bg={isSelected ? 'appSuccess' : 'white'}
-                                                    paddingHorizontal={'xl'}
-                                            >
-                                                <Text
-                                                        bold
-                                                        color={isSelected ? 'white' : 'infoMain'}
-                                                >{el}</Text>
-                                            </Box>
-                                        </TouchableOpacity>
-                                );
-                            })
-                        }
                     </Box>
                     <Box mt={'m'}>
                         <TouchableOpacity
@@ -595,7 +649,10 @@ function SchedulePicker({ schedule, onPick }) {
     }
 
     return (
-            <Box mt={'m'}>
+            <Box
+
+                    mt={'m'}
+            >
 
                 {
                     Object.keys(schedule ?? {})?.map((el, key) => {
@@ -604,7 +661,6 @@ function SchedulePicker({ schedule, onPick }) {
 
                         const name = DateTimeUtils.getNameOfDay(el);
                         const isToday = today == el;
-
                         return (
                                 <Box mb={'m'}>
                                     <Box mb={'s'}>
@@ -614,52 +670,14 @@ function SchedulePicker({ schedule, onPick }) {
                                         >{isToday ? 'Hoy' : name}:</Text>
                                     </Box>
                                     <Box
-                                            flexDirection={'row'}
-                                            gap={'l'}
                                             mt={'m'}
-                                            flexWrap={'wrap'}
                                     >
-                                        {
-                                                items.length == 0 && (
-                                                        <Box mb={'m'}>
-                                                            <Text color={'greyMain'}>Sin disponibilidad</Text>
-                                                        </Box>
-                                                )
-                                        }
-                                        {
-                                            items?.map((k, i) => {
-                                                const isSelected = el + i == selected;
-                                                return (
-                                                        <TouchableOpacity
-                                                                onPress={() => {
-                                                                    if (!DateTimeUtils.getNext(el)) return;
-
-                                                                    setSelected(isSelected ? null : el + i);
-                                                                    onPick({
-                                                                        date: DateTimeUtils.format(isToday ? new Date() : DateTimeUtils.getNext(el), 'YYYY-MM-DD'),
-                                                                        hour: k
-                                                                    });
-                                                                }}
-                                                        >
-                                                            <Box
-                                                                    borderRadius={BASE_RADIUS}
-                                                                    borderWidth={5}
-                                                                    borderColor={isSelected ? 'appSuccess' : 'infoMain'}
-                                                                    p={'m'}
-                                                                    bg={isSelected ? 'appSuccess' : 'white'}
-                                                                    paddingHorizontal={'xl'}
-                                                            >
-                                                                <Text
-                                                                        bold
-                                                                        color={isSelected ? 'white' : 'infoMain'}
-                                                                >{k}</Text>
-                                                            </Box>
-                                                        </TouchableOpacity>
-                                                );
-                                            })
-                                        }
-
-
+                                        <TableGrid
+                                                onPick={onPick}
+                                                tables={items ?? []}
+                                                dayName={el}
+                                                selected={selected}
+                                        />
                                     </Box>
                                 </Box>
 
@@ -672,6 +690,98 @@ function SchedulePicker({ schedule, onPick }) {
     );
 }
 
+function TableGrid({
+    selected,
+    tables,
+    onPick,
+    dayName
+}: { dayName: string; selected: any; onPick: any; tables: { id: string; name: string; availableSlots: string[] }[] }) {
+
+    const slots = ArrayUtils.orderBy(ArrayUtils.uniqBy(tables.flatMap(t => t.availableSlots).map(el => {
+        return {
+            str: el,
+            hour: DateTimeUtils.fromTime(el)
+        };
+    }), 'str'), ['hour'], ['asc']);
+
+    if (slots.length == 0) {
+        return (
+                <Box mb={'m'}>
+                    <Text color={'greyMain'}>Sin disponibilidad</Text>
+                </Box>
+        );
+    }
+
+    return (
+            <Box
+                    flexDirection={'row'}
+                    gap={'m'}
+                    flexWrap={'wrap'}
+            >
+                {
+                    slots.map((slot, el) => {
+                        const isSelected = (() => {
+                            if (!selected.date) return false;
+                            if (!selected.hour) return false;
+
+                            return selected.hour == slot.str && DateTimeUtils.format(DateTimeUtils.fromString(selected.date), 'dddd').toUpperCase() == dayName;
+                        })();
+
+                        return (
+                                <SlotColumn
+                                        isSelected={isSelected}
+                                        onPick={onPick}
+                                        key={el}
+                                        dayName={dayName}
+                                        slot={slot}
+                                />
+                        );
+                    })
+                }
+            </Box>
+    );
+}
+
+function SlotColumn({
+    isSelected,
+    slot,
+    onPick,
+    dayName
+}: { dayName: string; isSelected: boolean; slot: any; onPick: any; }) {
+
+    const today = new Date();
+    return (
+
+            <TouchableOpacity
+                    onPress={() => {
+                        if (isSelected) return;
+
+                        const isToday = DateTimeUtils.format(today, 'dddd').toUpperCase() == dayName;
+
+                        onPick({
+                            date: DateTimeUtils.format(isToday ? new Date() : DateTimeUtils.getNext(dayName), 'YYYY-MM-DD'),
+                            hour: slot.str,
+                            tableId: null
+                        });
+                    }}
+            >
+                <Box
+                        borderRadius={BASE_RADIUS}
+                        borderWidth={5}
+                        borderColor={isSelected ? 'appSuccess' : 'infoMain'}
+                        p={'m'}
+                        bg={isSelected ? 'appSuccess' : 'white'}
+                        paddingHorizontal={'xl'}
+                >
+                    <Text
+                            bold
+                            color={isSelected ? 'white' : 'infoMain'}
+                    >{slot.str}</Text>
+                </Box>
+            </TouchableOpacity>
+    );
+}
+
 function ReservationController({ restaurant, inputData }) {
     const [state, setState] = useState(false);
     const eventBus = useEventBus();
@@ -679,6 +789,7 @@ function ReservationController({ restaurant, inputData }) {
     const isInvalid = (() => {
         if (!inputData) return true;
         if (!inputData.numberOfPeople) return true;
+        if (!inputData.tableId) return true;
         if (!inputData.hour) return true;
         if (!inputData.date) return true;
         return false;
@@ -726,8 +837,6 @@ function ReservationController({ restaurant, inputData }) {
 
 function ScanModal(props: Partial<ModalProps> & { data?: any }) {
     const theme = useTheme();
-    const { navigate } = useNavigation();
-
     const MODAL_HEIGHT = SizingUtils.vscale(240);
 
     return (
@@ -838,34 +947,6 @@ function QrGen({ data }) {
     );
 }
 
-
-function ContrastButton(props) {
-    return (
-            <TouchableOpacity
-                    style={{
-                        ...props.style
-                    }}
-            >
-                <Box
-                        borderRadius={8}
-                        backgroundColor={'appSuccess'}
-                        p={'m'}
-                        style={{
-                            boxShadow: '#dddddd 0px 4px 3px'
-                        }}
-                        paddingHorizontal={'xl'}
-                >
-                    <Text
-                            align={'center'}
-                            bold
-                            color={'white'}
-                    >
-                        {props.title}
-                    </Text>
-                </Box>
-            </TouchableOpacity>
-    );
-}
 
 function ReservationButton(props) {
 

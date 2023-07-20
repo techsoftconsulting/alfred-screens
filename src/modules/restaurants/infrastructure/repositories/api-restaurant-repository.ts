@@ -122,84 +122,99 @@ export default class ApiRestaurantRepository
 
     async getAvailability(id: string): Promise<RestaurantAvailability> {
 
-        const tables = await this.getRestaurantTables(id);
 
-        const nextDays = (() => {
-            const days = [];
+        const doc: any = await this.get(`${COLLECTION_NAME}/${id}/availability`, true);
 
-            for (let i = 0; i < 7; i++) {
-                const nextDay = DateTimeUtils.addDays(new Date(), i);
-                days.push(nextDay);
-            }
-
-            return days;
-        })();
-
-        const getNextHours = (startHour, endHour, duration) => {
-            const finalItems = [startHour];
-            const finalReservDuration = duration.hours + duration.minutes / 60;
-
-            const range = Math.floor(Math.floor(DateTimeUtils.differenceInHours(endHour, startHour)) / finalReservDuration);
-
-            let currItem = startHour;
-
-            for (let i = 0; i < range; i++) {
-                const nextItem = DateTimeUtils.addMinutes(
-                    DateTimeUtils.addHours(
-                        DateTimeUtils.fromTime(currItem), duration.hours),
-                    duration.minutes
-                );
-                finalItems.push(nextItem);
-
-                currItem = nextItem;
-            }
-
-            return finalItems;
+        if (!doc) return {
+            'MONDAY': [],
+            'TUESDAY': [],
+            'WEDNESDAY': [],
+            'THURSDAY': [],
+            'FRIDAY': [],
+            'SATURDAY': [],
+            'SUNDAY': []
         };
 
-        const today = new Date();
-        const dayHours = nextDays.reduce((acc, date) => {
-            const dateName = DateTimeUtils.format(date, 'dddd').toUpperCase();
-            const availableTables = tables.filter((t) => t.isAvailable(dateName));
+        return doc;
 
-            /* filter busy tables */
+        /* const tables = await this.getRestaurantTables(id);
 
-            const isToday = dateName == DateTimeUtils.format(new Date(), 'dddd').toUpperCase();
+         const nextDays = (() => {
+             const days = [];
 
-            const dayAvailableHours = ArrayUtils.orderBy(ArrayUtils.uniqBy(availableTables.flatMap((t) => ({
-                start: DateTimeUtils.format(t.schedule[dateName].startHour, 'HH:mm'),
-                startHour: t.schedule[dateName].startHour,
-                endHour: t.schedule[dateName].endHour,
-                duration: t.reservationDuration
-            })), 'start'), ['startHour'], ['asc']);
+             for (let i = 0; i < 7; i++) {
+                 const nextDay = DateTimeUtils.addDays(new Date(), i);
+                 days.push(nextDay);
+             }
 
-            const finalSlots = dayAvailableHours.reduce((acc, current) => {
+             return days;
+         })();
 
-                const rangeSlots = getNextHours(current.startHour, current.endHour, current.duration).filter(el => {
-                    const formatted = DateTimeUtils.fromTime(DateTimeUtils.format(el, 'HH:mm'));
-                    return isToday ? !DateTimeUtils.isPast(formatted) : true;
-                });
+         const getNextHours = (startHour, endHour, duration) => {
+             const finalItems = [startHour];
+             const finalReservDuration = duration.hours + duration.minutes / 60;
 
-                return [
-                    ...acc,
-                    ...rangeSlots.map(z => {
-                        return {
-                            start: DateTimeUtils.format(z, 'HH:mm'),
-                            startHour: z,
-                            endHour: DateTimeUtils.addMinutes(
-                                DateTimeUtils.addHours(
-                                    DateTimeUtils.fromTime(z), current.duration.hours),
-                                current.duration.minutes
-                            )
-                        };
-                    })
-                ];
-            }, []);
+             const range = Math.floor(Math.floor(DateTimeUtils.differenceInHours(endHour, startHour)) / finalReservDuration);
 
-            return { ...acc, [dateName]: finalSlots.map((s) => s.start) };
-        }, {});
+             let currItem = startHour;
 
-        return dayHours;
+             for (let i = 0; i < range; i++) {
+                 const nextItem = DateTimeUtils.addMinutes(
+                     DateTimeUtils.addHours(
+                         DateTimeUtils.fromTime(currItem), duration.hours),
+                     duration.minutes
+                 );
+                 finalItems.push(nextItem);
+
+                 currItem = nextItem;
+             }
+
+             return finalItems;
+         };
+
+         const today = new Date();
+         const dayHours = nextDays.reduce((acc, date) => {
+             const dateName = DateTimeUtils.format(date, 'dddd').toUpperCase();
+             const availableTables = tables.filter((t) => t.isAvailable(dateName));
+
+             /!* filter busy tables *!/
+
+             const isToday = dateName == DateTimeUtils.format(new Date(), 'dddd').toUpperCase();
+
+             const dayAvailableHours = ArrayUtils.orderBy(ArrayUtils.uniqBy(availableTables.flatMap((t) => ({
+                 start: DateTimeUtils.format(t.schedule[dateName].startHour, 'HH:mm'),
+                 startHour: t.schedule[dateName].startHour,
+                 endHour: t.schedule[dateName].endHour,
+                 duration: t.reservationDuration
+             })), 'start'), ['startHour'], ['asc']);
+
+             const finalSlots = dayAvailableHours.reduce((acc, current) => {
+
+                 const rangeSlots = getNextHours(current.startHour, current.endHour, current.duration).filter(el => {
+                     const formatted = DateTimeUtils.fromTime(DateTimeUtils.format(el, 'HH:mm'));
+                     return isToday ? !DateTimeUtils.isPast(formatted) : true;
+                 });
+
+                 return [
+                     ...acc,
+                     ...rangeSlots.map(z => {
+                         return {
+                             start: DateTimeUtils.format(z, 'HH:mm'),
+                             startHour: z,
+                             endHour: DateTimeUtils.addMinutes(
+                                 DateTimeUtils.addHours(
+                                     DateTimeUtils.fromTime(z), current.duration.hours),
+                                 current.duration.minutes
+                             )
+                         };
+                     })
+                 ];
+             }, []);
+
+             return { ...acc, [dateName]: finalSlots.map((s) => s.start) };
+         }, {});
+
+         return dayHours;*/
     }
 
     private async getRestaurantTables(id: string) {

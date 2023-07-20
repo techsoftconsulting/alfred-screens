@@ -1,3 +1,3 @@
 export default interface RestaurantAvailability {
-    [day: string]: string[];
+    [day: string]: { id: string; name: string; availableSlots: string[] }[];
 }
