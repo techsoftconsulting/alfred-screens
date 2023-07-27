@@ -1,11 +1,29 @@
 import React, { useEffect, useState } from 'react';
 import { BaseSelectPickerInputProps } from './BaseSelectPickerInputProps';
-import { Autocomplete, TextField } from '@mui/material';
-import { useTheme } from '@shared/ui/theme/AppTheme';
+import { Autocomplete, autocompleteClasses, TextField } from '@mui/material';
+import theme, { useTheme } from '@shared/ui/theme/AppTheme';
 import SizingUtils from '@utils/misc/sizing-utils';
 import { Box } from '@main-components/Base/Box';
 import Text from '@main-components/Typography/Text';
 import { Icon } from '@main-components/Base/Icon';
+import Popper from '@mui/material/Popper';
+import { styled } from '@mui/material/styles';
+
+const StyledPopper = styled(Popper)({
+    [`& .${autocompleteClasses.popper}`]: {
+        borderRadius: 10
+    },
+    [`& .${autocompleteClasses.listbox}`]: {
+        padding: 0,
+        borderRadius: 10,
+        backgroundImage: `linear-gradient(${theme.colors.contrastMain},${theme.colors.contrastLight}) `,
+        boxSizing: 'border-box',
+        '& ul': {
+            padding: 0,
+            margin: 0
+        }
+    }
+});
 
 export default function BaseSelectPickerInput(
         props: BaseSelectPickerInputProps
@@ -24,6 +42,7 @@ export default function BaseSelectPickerInput(
         hideSearch = false,
         loading,
         disabled,
+        renderOption,
         canClear = true,
         ...rest
     } = props;
@@ -66,6 +85,8 @@ export default function BaseSelectPickerInput(
                     onChange={onConfirm}
                     disableClearable={!props.canClear}
                     options={choices}
+                    fullWidth
+                    PopperComponent={StyledPopper}
                     getOptionSelected={(option, value) => {
                         return option[finalOptionValue] === value?.[finalOptionValue];
                     }}
@@ -89,8 +110,8 @@ export default function BaseSelectPickerInput(
                     }
                     popupIcon={
                         <Icon
-                                name={'caret-down'}
-                                color={'greyMain'}
+                                name={'chevron-down'}
+                                color={'infoMain'}
                                 type={'ionicon'}
                                 numberSize={SizingUtils.scale(14)}
                         />
@@ -102,8 +123,29 @@ export default function BaseSelectPickerInput(
                             }
                         }
                     }}
-                    renderOption={(props, option, state) =>
-                            <div  {...props}><Box p={'m'}><Text variant={'body'}>{option?.name}</Text></Box></div>}
+                    renderOption={(props, option, state) => {
+                        return (
+                                <div  {...props} style={{
+                                    padding: 0,
+                                    width: '100%'
+                                }}
+                                >
+                                    <Box
+                                            p={'m'}
+                                            flex={1}
+                                            borderBottomWidth={1}
+                                            borderBottomColor={'white'}
+                                            paddingBottom={'m'}
+                                            marginHorizontal={'m'}
+                                    >
+                                        <Text
+                                                color={'white'}
+                                                variant={'body'}
+                                        >{option?.name}</Text>
+                                    </Box>
+                                </div>
+                        );
+                    }}
                     getOptionLabel={(option) => option[finalOptionText]}
                     disabled={props.disabled}
                     renderInput={(params) => <TextField {...params}

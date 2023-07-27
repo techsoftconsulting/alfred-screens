@@ -19,6 +19,7 @@ const themeM = createTheme({
         },
         MuiAutocomplete: {
             styleOverrides: {
+                popper: {},
                 inputFocused: {
                     border: 0,
                     outline: 'none'
@@ -34,12 +35,12 @@ const themeM = createTheme({
 
 export function StylesProvider({ theme, children }) {
     return (
-        <MUIStylesProvider
-            theme={themeM}
-        >
-            <ThemeProvider theme={theme}>
-                {children}
-            </ThemeProvider>
-        </MUIStylesProvider>
+            <MUIStylesProvider
+                    theme={themeM}
+            >
+                <ThemeProvider theme={theme}>
+                    {children}
+                </ThemeProvider>
+            </MUIStylesProvider>
     );
 }

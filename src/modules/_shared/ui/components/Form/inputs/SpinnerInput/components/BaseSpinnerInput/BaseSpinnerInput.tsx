@@ -13,14 +13,15 @@ export default function BaseSpinnerInput(props: BaseSpinnerInputProps) {
                     skin='round'
                     max={props.max}
                     min={props.min}
+                    disabled={props.disabled}
                     height={SizingUtils.mscale(40)}
                     colorAsBackground={true}
                     color={theme.colors.primaryMain}
                     buttonFontSize={theme.textVariants.big1.fontSize}
                     fontSize={theme.textVariants.big1.fontSize}
                     inputStyle={{
-                        fontSize: theme.textVariants.body.fontSize,
-                        backgroundColor: theme.colors.greyLightest
+                        fontSize: theme.textVariants.body.fontSize + 15,
+                        backgroundColor: theme.colors.white
                     }}
 
                     style={{

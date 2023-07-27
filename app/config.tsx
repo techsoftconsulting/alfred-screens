@@ -61,6 +61,7 @@ export default function ConfigRoute() {
                             <RestaurantMallSelectInput
                                     label={'Plaza'}
                                     required
+                                    bg={'white'}
                                     validate={required()}
                                     source={'mallId'}
                             />

@@ -176,7 +176,7 @@ function MenuItem({ id, selected, title, onPress }) {
         const color = interpolateColor(
                 animation.value,
                 [0, 1],
-                [theme.colors.primaryMain, theme.colors.appSuccess]
+                [theme.colors.primaryMain, theme.colors.contrastLight]
         );
 
         return {

@@ -48,7 +48,7 @@ export default class Restaurant {
 
     get todaySchedule() {
         const dateName = DateTimeUtils.format(new Date(), 'dddd').toUpperCase();
-        return this.props.schedule[dateName];
+        return this.props.schedule?.[dateName];
     }
 
     get slug() {

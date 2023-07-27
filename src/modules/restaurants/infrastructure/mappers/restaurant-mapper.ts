@@ -20,7 +20,7 @@ export default class RestaurantMapper {
                 };
             }, {})) : undefined,
             contactPhone: dto.contactPhone,
-            categoriesIds: dto.categoriesIds,
+            categoriesIds: dto.categoriesIds ?? [],
             name: dto.name,
             createdAt: dto.createdAt,
             slug: dto.slug,

@@ -32,7 +32,6 @@ import UuidUtils from '@utils/misc/uuid-utils';
 import ObjectUtils from '@utils/misc/object-utils';
 import UserBookedRestaurantTableEvent from '@modules/restaurants/domain/events/user-booked-restaurant-table-event';
 import { ENV } from '@shared/infrastructure/utils/get-envs';
-import ArrayUtils from '@utils/misc/array-utils';
 import BaseSelectPickerInput from '@main-components/Form/inputs/SelectInput/components/BaseSelectPickerInput';
 
 const BASE_RADIUS = SizingUtils.mscale(4);
@@ -86,30 +85,30 @@ export default function RestaurantDetailsScreen() {
                     }
             >
                 <Header restaurant={restaurant} />
-                <RestaurantDescriptionSection restaurant={restaurant} />
-                <RestaurantLocationSection
-                        restaurant={restaurant}
-                        mall={mall}
-                />
-                <RestaurantCategoriesSection
-                        restaurant={restaurant}
-                        loading={loadingCategories}
-                        categories={categories}
-                />
 
-                <Box mt={'l'}>
-                    <Box mb={'l'}>
-                        <Text
-                                variant={'heading1'}
-                                bold
-                        >
-                            Horario
-                        </Text>
-                    </Box>
-                    <Box>
-                        <Text bold>{!!restaurant?.todaySchedule ? `${DateTimeUtils.format(restaurant.todaySchedule.startHour, 'hh:mm A')} - ${DateTimeUtils.format(restaurant.todaySchedule.endHour, 'hh:mm A')}` : 'Sin horario...'}</Text>
-                    </Box>
+                <Box
+                        mb={'l'}
+                        alignItems={'center'}
+                >
+                    <RestaurantCategoriesSection
+                            restaurant={restaurant}
+                            loading={loadingCategories}
+                            categories={categories}
+                    />
+                    {
+                            !!restaurant?.todaySchedule && (
+                                    <Box mt={'l'}>
+                                        <Box>
+                                            <Text bold>{!!restaurant?.todaySchedule ? `${DateTimeUtils.format(restaurant.todaySchedule.startHour, 'hh:mm A')} - ${DateTimeUtils.format(restaurant.todaySchedule.endHour, 'hh:mm A')}` : 'Sin horario...'}</Text>
+                                        </Box>
+                                    </Box>
+                            )
+                    }
+
                 </Box>
+
+                <RestaurantDescriptionSection restaurant={restaurant} />
+
                 <RestaurantScheduleSection
                         availability={availability}
                         restaurant={restaurant}
@@ -189,20 +188,21 @@ function RestaurantDescriptionSection({
 }: {
     restaurant?: Restaurant;
 }) {
-    if (!restaurant?.description) return <Box />;
+    if (!restaurant?.description || restaurant?.description == '') return <Box />;
 
     return (
-            <Box mb={'xl'}>
+            <Box mb={'l'}>
                 <Box mb={'m'}>
                     <Text
                             variant={'heading1'}
                             bold
+                            align={'center'}
                     >
-                        Acerca de {restaurant?.name}
+                        Descripción
                     </Text>
                 </Box>
                 <Box>
-                    <Text align={'justify'}>{restaurant.description}</Text>
+                    <Text align={'center'}>{restaurant.description}</Text>
                 </Box>
             </Box>
     );
@@ -224,12 +224,13 @@ function RestaurantLocationSection({
                     <Text
                             variant={'heading1'}
                             bold
+                            align={'center'}
                     >
                         Ubicación
                     </Text>
                 </Box>
                 <Box>
-                    <Text>{mall.name}</Text>
+                    <Text align={'center'}>{mall.name}</Text>
                 </Box>
             </Box>
     );
@@ -248,8 +249,10 @@ function RestaurantCategoriesSection({
             ? categories?.filter((c) => restaurant.categoriesIds.includes(c.id))
             : [];
 
+    if (filteredCategories?.length == 0 && !loading) return <Box />;
+
     return (
-            <Box>
+            <Box alignItems={'center'}>
                 <Box mb={'l'}>
                     <Text
                             variant={'heading1'}
@@ -283,6 +286,7 @@ function RestaurantCategoriesSection({
                         <Box
                                 flexDirection={'row'}
                                 gap={'l'}
+                                flexWrap={'wrap'}
                         >
                             {filteredCategories?.map((e) => {
                                 return (
@@ -291,6 +295,7 @@ function RestaurantCategoriesSection({
                                                 borderRadius={BASE_RADIUS}
                                                 borderWidth={5}
                                                 borderColor={'infoMain'}
+                                                bg={'infoMain'}
                                                 style={{
                                                     width: 'fit-content'
                                                 }}
@@ -299,7 +304,7 @@ function RestaurantCategoriesSection({
                                         >
                                             <Text
                                                     bold
-                                                    color={'infoMain'}
+                                                    color={'white'}
                                             >
                                                 {e.name}
                                             </Text>
@@ -361,48 +366,24 @@ function RestaurantScheduleSection({
                                 flex={1}
                                 marginVertical={'l'}
                         >
-                            <Text
-                                    variant={'heading4'}
-                                    bold
-                            >
-                                Horarios disponibles:
-                            </Text>
-
-                            <SchedulePicker
-                                    schedule={availability}
-                                    selected={{
-                                        date: inputData.date,
-                                        hour: inputData.hour
-                                    }}
-                                    onPick={(schedule) => {
-                                        setInputData({
-                                            ...inputData,
-                                            ...schedule
-                                        });
-                                    }}
-                            />
-
-
-                            <Box
-                                    mt={'l'}
-                            >
+                            <Box>
                                 <Box mb={'m'}>
                                     <Box
 
                                             mb={'m'}
                                     >
-                                        <Box mb={'m'}>
+                                        <Box
+                                                alignItems={'center'}
+                                                mb={'m'}
+                                        >
                                             <Text
                                                     variant={'heading3'}
                                                     bold
                                             >
-                                                Mesa disponible
+                                                Selecciona ubicación:
                                             </Text>
                                         </Box>
-                                        <Box
-
-                                                flex={1}
-                                        >
+                                        <Box flex={1}>
                                             <TableOptions
                                                     value={inputData?.tableId}
                                                     onChange={(value) => {
@@ -412,56 +393,49 @@ function RestaurantScheduleSection({
                                                         });
                                                     }}
                                                     availability={availability}
-                                                    selectedOption={{
-                                                        date: inputData.date,
-                                                        hour: inputData.hour
-                                                    }}
                                             />
 
                                         </Box>
 
                                     </Box>
                                 </Box>
-                                <Box>
-                                    <Box mb={'m'}>
-                                        <Text
-                                                variant={'heading3'}
-                                                bold
-                                        >
-                                            Número de personas
-                                        </Text>
-                                    </Box>
-                                    <Box
-                                            alignItems={'center'}
-                                            flexDirection={'row'}
-                                    >
-                                        <Icon
-                                                name={'user'}
-                                                color={'black'}
-                                                numberSize={SizingUtils.mscale(25)}
+                                <Box
+                                        flexDirection={'row'}
+                                        justifyContent={'space-between'}
+                                        gap={'l'}
+                                        mt={'xl'}
+                                >
+                                    <Box flex={0.5}>
+                                        <PeopleInput
+                                                tableId={inputData?.tableId}
+                                                schedule={availability}
+                                                onChange={(count) => {
+                                                    setInputData({
+                                                        ...inputData,
+                                                        numberOfPeople: count
+                                                    });
+                                                }}
                                         />
-
-                                        <Box
-                                                maxWidth={SizingUtils.mscale(150)}
-                                                ml={'l'}
-                                        >
-                                            <BaseInput
-                                                    noMargin
-                                                    WrapperComponent={Box}
-                                                    bg={'white'}
-                                            >
-                                                <BaseSpinnerInput
-                                                        min={1}
-                                                        onChange={(count) => {
-                                                            setInputData({
-                                                                ...inputData,
-                                                                numberOfPeople: count
-                                                            });
-                                                        }}
-                                                />
-                                            </BaseInput>
-                                        </Box>
                                     </Box>
+
+                                    <Box flex={0.5}>
+                                        <SchedulePicker
+                                                tableId={inputData?.tableId}
+                                                schedule={availability}
+                                                selected={{
+                                                    date: inputData.date,
+                                                    hour: inputData.hour
+                                                }}
+                                                onPick={(schedule) => {
+                                                    setInputData({
+                                                        ...inputData,
+                                                        ...schedule
+                                                    });
+                                                }}
+                                        />
+                                    </Box>
+
+
                                 </Box>
                             </Box>
                         </Box>
@@ -543,32 +517,66 @@ function RestaurantScheduleSection({
     );
 }
 
+function PeopleInput({ onChange, tableId, schedule }) {
+
+    const table = !tableId ? undefined : (schedule?.items ?? []).find(el => el.id == tableId);
+
+
+    return (
+            <Box>
+                <Box mb={'m'}>
+                    <Text
+                            align={'center'}
+                            variant={'heading3'}
+                            bold
+                    >
+                        Número de personas:
+                    </Text>
+                </Box>
+                <Box
+                        justifyContent={'center'}
+                        alignItems={'center'}
+                        flexDirection={'row'}
+                >
+                    <Icon
+                            name={'user'}
+                            color={'black'}
+                            numberSize={SizingUtils.mscale(25)}
+                    />
+
+                    <Box
+                            maxWidth={SizingUtils.mscale(150)}
+                            ml={'l'}
+                    >
+                        <BaseInput
+                                noMargin
+                                WrapperComponent={Box}
+                                bg={'white'}
+                                style={{
+                                    opacity: !tableId ? 0.5 : 1
+                                }}
+                        >
+                            <BaseSpinnerInput
+                                    disabled={!tableId}
+                                    min={1}
+                                    onChange={onChange}
+                                    max={table?.capacity}
+                            />
+                        </BaseInput>
+                    </Box>
+                </Box>
+            </Box>
+    );
+}
+
 function TableOptions({
     value,
     onChange,
-    selectedOption,
     availability
-}: { value: any; onChange: any; selectedOption: any; availability: RestaurantAvailability | undefined }) {
+}: { value: any; onChange: any; availability: RestaurantAvailability | undefined }) {
 
-    const day = selectedOption.date ? DateTimeUtils.format(DateTimeUtils.fromString(selectedOption.date), 'dddd').toUpperCase() : undefined;
+    const options = availability?.items ?? [];
 
-    const options = !availability ? [] : !day || !selectedOption.hour ? [] : availability?.[day].filter(el => el.availableSlots.includes(selectedOption.hour));
-
-    if (selectedOption.date && options.length == 0) {
-        return (
-                <Box
-                        borderRadius={20}
-                        p={'m'}
-                        bg={'warningLightest'}
-                >
-
-                    <Text
-                            color={'warningMain'}
-                            variant={'body'}
-                    >No hay mesas disponibles para las {selectedOption.hour}</Text>
-                </Box>
-        );
-    }
 
     return (
             <BaseInput
@@ -592,193 +600,68 @@ function TableOptions({
 function SchedulePicker({
     selected,
     schedule,
-    onPick
-}: { selected: any; schedule: RestaurantAvailability | undefined; onPick: any }) {
+    onPick,
+    tableId
+}: { selected: any; tableId?: string; schedule: RestaurantAvailability | undefined; onPick: any }) {
 
-    const today = DateTimeUtils.format(new Date(), 'dddd')?.toUpperCase();
-    const todayRow = schedule?.[today];
+    const theme = useTheme();
 
-    const [mode, setMode] = useState('collapsed');
-
-    if (mode == 'collapsed') {
-
-        return (
-                <Box>
-                    <Box
-                            flexDirection={'row'}
-                            gap={'l'}
-                            mt={'m'}
-                            flexWrap={'wrap'}
-                    >
+    const options = !tableId ? [] : (schedule?.items ?? []).find(el => el.id == tableId)?.availableSlots ?? [];
 
 
-                        <TableGrid
-                                onPick={onPick}
-                                tables={todayRow ?? []}
-                                selected={selected}
-                                dayName={today}
-                        />
-
-                    </Box>
-                    <Box mt={'m'}>
-                        <TouchableOpacity
-                                onPress={() => {
-                                    setMode('expanded');
-                                }}
-                        >
-                            <Box
-                                    borderRadius={BASE_RADIUS}
-                                    borderWidth={5}
-                                    borderColor={'infoMain'}
-                                    p={'m'}
-                                    paddingHorizontal={'xl'}
-                            >
-                                <Text
-                                        align={'center'}
-                                        bold
-                                        color={'infoMain'}
-                                >
-                                    Ver disponibilidad completa
-                                </Text>
-                            </Box>
-                        </TouchableOpacity>
-                    </Box>
-                </Box>
-
-        );
+    function toSelect() {
+        if (!selected) return;
+        return `${selected.hour}*${selected.date}`;
     }
 
     return (
             <Box
-
-                    mt={'m'}
-            >
-
-                {
-                    Object.keys(schedule ?? {})?.map((el, key) => {
-                        const items = schedule[el];
-
-
-                        const name = DateTimeUtils.getNameOfDay(el);
-                        const isToday = today == el;
-                        return (
-                                <Box mb={'m'}>
-                                    <Box mb={'s'}>
-                                        <Text
-                                                bold
-                                                color={'black'}
-                                        >{isToday ? 'Hoy' : name}:</Text>
-                                    </Box>
-                                    <Box
-                                            mt={'m'}
-                                    >
-                                        <TableGrid
-                                                onPick={onPick}
-                                                tables={items ?? []}
-                                                dayName={el}
-                                                selected={selected}
-                                        />
-                                    </Box>
-                                </Box>
-
-                        );
-                    })
-                }
-
-            </Box>
-
-    );
-}
-
-function TableGrid({
-    selected,
-    tables,
-    onPick,
-    dayName
-}: { dayName: string; selected: any; onPick: any; tables: { id: string; name: string; availableSlots: string[] }[] }) {
-
-    const slots = ArrayUtils.orderBy(ArrayUtils.uniqBy(tables.flatMap(t => t.availableSlots).map(el => {
-        return {
-            str: el,
-            hour: DateTimeUtils.fromTime(el)
-        };
-    }), 'str'), ['hour'], ['asc']);
-
-    if (slots.length == 0) {
-        return (
-                <Box mb={'m'}>
-                    <Text color={'greyMain'}>Sin disponibilidad</Text>
-                </Box>
-        );
-    }
-
-    return (
-            <Box
-                    flexDirection={'row'}
-                    gap={'m'}
-                    flexWrap={'wrap'}
-            >
-                {
-                    slots.map((slot, el) => {
-                        const isSelected = (() => {
-                            if (!selected.date) return false;
-                            if (!selected.hour) return false;
-
-                            return selected.hour == slot.str && DateTimeUtils.format(DateTimeUtils.fromString(selected.date), 'dddd').toUpperCase() == dayName;
-                        })();
-
-                        return (
-                                <SlotColumn
-                                        isSelected={isSelected}
-                                        onPick={onPick}
-                                        key={el}
-                                        dayName={dayName}
-                                        slot={slot}
-                                />
-                        );
-                    })
-                }
-            </Box>
-    );
-}
-
-function SlotColumn({
-    isSelected,
-    slot,
-    onPick,
-    dayName
-}: { dayName: string; isSelected: boolean; slot: any; onPick: any; }) {
-
-    const today = new Date();
-    return (
-
-            <TouchableOpacity
-                    onPress={() => {
-                        if (isSelected) return;
-
-                        const isToday = DateTimeUtils.format(today, 'dddd').toUpperCase() == dayName;
-
-                        onPick({
-                            date: DateTimeUtils.format(isToday ? new Date() : DateTimeUtils.getNext(dayName), 'YYYY-MM-DD'),
-                            hour: slot.str,
-                            tableId: null
-                        });
-                    }}
+                    justifyContent={'center'}
             >
                 <Box
-                        borderRadius={BASE_RADIUS}
-                        borderWidth={5}
-                        borderColor={isSelected ? 'appSuccess' : 'infoMain'}
-                        p={'m'}
-                        bg={isSelected ? 'appSuccess' : 'white'}
-                        paddingHorizontal={'xl'}
+                        mb={'m'}
+                        alignItems={'center'}
                 >
                     <Text
+                            align={'center'}
+                            variant={'heading3'}
                             bold
-                            color={isSelected ? 'white' : 'infoMain'}
-                    >{slot.str}</Text>
+                    >
+                        Selecciona horario:
+                    </Text>
                 </Box>
-            </TouchableOpacity>
+                <Box>
+                    <BaseInput
+                            noMargin
+                            style={{
+                                opacity: !tableId ? 0.5 : 1
+                            }}
+                            bg={'white'}
+                    >
+                        <BaseSelectPickerInput
+                                disabled={!tableId}
+                                onChange={(selected) => {
+                                    const [hour, date] = selected?.split('*');
+                                    onPick({
+                                        hour,
+                                        date: date
+                                    });
+                                }}
+
+                                value={toSelect(selected)}
+                                choices={options?.map(o => {
+                                    const isToday = DateTimeUtils.format(new Date(), 'dddd').toUpperCase() == o.dateName;
+                                    const isTomorrow = DateTimeUtils.format(DateTimeUtils.addDays(new Date(), 1), 'dddd').toUpperCase() == o.dateName;
+
+                                    return {
+                                        id: `${o.start}*${DateTimeUtils.format(new Date(o.date), 'YYYY-MM-DD')}`,
+                                        name: `${isToday ? 'Hoy' : isTomorrow ? 'Mañana' : DateTimeUtils.getNameOfDay(o.dateName)} ${o.start} - ${o.end}`
+                                    };
+                                })}
+                        />
+                    </BaseInput>
+                </Box>
+            </Box>
     );
 }
 
@@ -800,7 +683,6 @@ function ReservationController({ restaurant, inputData }) {
                 <ReservationButton
                         disabled={!restaurant || isInvalid}
                         title={'Reservar'}
-                        backgroundColor={'appSuccess'}
                         style={{
                             width: '50%'
                         }}
@@ -961,7 +843,7 @@ function ReservationButton(props) {
             >
                 <Box
                         borderRadius={BASE_RADIUS}
-                        backgroundColor={'appSuccess'}
+                        backgroundColor={'contrastLight'}
                         p={'l'}
                         style={{
                             boxShadow: '#dddddd 0px 4px 3px'

@@ -3,7 +3,6 @@ import RestaurantRepository from '@modules/restaurants/domain/repositories/resta
 import RestaurantMapper from '@modules/restaurants/infrastructure/mappers/restaurant-mapper';
 import ArrayUtils from '@utils/misc/array-utils';
 import DateTimeUtils from '@utils/misc/datetime-utils';
-import AreaMapper from '@modules/restaurants/infrastructure/mappers/area-mapper';
 import RestaurantAvailability from '@modules/restaurants/domain/models/restaurant-availability';
 import InMemoryConfigRepo from '@modules/restaurants/infrastructure/repositories/in-memory-config-repo';
 import APIRepository from '@shared/infrastructure/api/api-repository';
@@ -126,111 +125,13 @@ export default class ApiRestaurantRepository
         const doc: any = await this.get(`${COLLECTION_NAME}/${id}/availability`, true);
 
         if (!doc) return {
-            'MONDAY': [],
-            'TUESDAY': [],
-            'WEDNESDAY': [],
-            'THURSDAY': [],
-            'FRIDAY': [],
-            'SATURDAY': [],
-            'SUNDAY': []
+            items: []
         };
 
-        return doc;
+        return {
+            items: doc
+        };
 
-        /* const tables = await this.getRestaurantTables(id);
-
-         const nextDays = (() => {
-             const days = [];
-
-             for (let i = 0; i < 7; i++) {
-                 const nextDay = DateTimeUtils.addDays(new Date(), i);
-                 days.push(nextDay);
-             }
-
-             return days;
-         })();
-
-         const getNextHours = (startHour, endHour, duration) => {
-             const finalItems = [startHour];
-             const finalReservDuration = duration.hours + duration.minutes / 60;
-
-             const range = Math.floor(Math.floor(DateTimeUtils.differenceInHours(endHour, startHour)) / finalReservDuration);
-
-             let currItem = startHour;
-
-             for (let i = 0; i < range; i++) {
-                 const nextItem = DateTimeUtils.addMinutes(
-                     DateTimeUtils.addHours(
-                         DateTimeUtils.fromTime(currItem), duration.hours),
-                     duration.minutes
-                 );
-                 finalItems.push(nextItem);
-
-                 currItem = nextItem;
-             }
-
-             return finalItems;
-         };
-
-         const today = new Date();
-         const dayHours = nextDays.reduce((acc, date) => {
-             const dateName = DateTimeUtils.format(date, 'dddd').toUpperCase();
-             const availableTables = tables.filter((t) => t.isAvailable(dateName));
-
-             /!* filter busy tables *!/
-
-             const isToday = dateName == DateTimeUtils.format(new Date(), 'dddd').toUpperCase();
-
-             const dayAvailableHours = ArrayUtils.orderBy(ArrayUtils.uniqBy(availableTables.flatMap((t) => ({
-                 start: DateTimeUtils.format(t.schedule[dateName].startHour, 'HH:mm'),
-                 startHour: t.schedule[dateName].startHour,
-                 endHour: t.schedule[dateName].endHour,
-                 duration: t.reservationDuration
-             })), 'start'), ['startHour'], ['asc']);
-
-             const finalSlots = dayAvailableHours.reduce((acc, current) => {
-
-                 const rangeSlots = getNextHours(current.startHour, current.endHour, current.duration).filter(el => {
-                     const formatted = DateTimeUtils.fromTime(DateTimeUtils.format(el, 'HH:mm'));
-                     return isToday ? !DateTimeUtils.isPast(formatted) : true;
-                 });
-
-                 return [
-                     ...acc,
-                     ...rangeSlots.map(z => {
-                         return {
-                             start: DateTimeUtils.format(z, 'HH:mm'),
-                             startHour: z,
-                             endHour: DateTimeUtils.addMinutes(
-                                 DateTimeUtils.addHours(
-                                     DateTimeUtils.fromTime(z), current.duration.hours),
-                                 current.duration.minutes
-                             )
-                         };
-                     })
-                 ];
-             }, []);
-
-             return { ...acc, [dateName]: finalSlots.map((s) => s.start) };
-         }, {});
-
-         return dayHours;*/
     }
 
-    private async getRestaurantTables(id: string) {
-
-        const dtos = await this.findByCriteriaRequest(AREAS_COLLECTION_NAME, [{
-            field: 'restaurantId',
-            operator: '==',
-            value: id
-        }]);
-
-        if (dtos.length == 0) {
-            return [];
-        }
-
-        const areas = AreaMapper.toDomainFromArray(dtos);
-
-        return areas.flatMap((a) => a.tables);
-    }
 }
